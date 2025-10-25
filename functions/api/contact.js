@@ -14,32 +14,33 @@ Message:
 ${data.message}
     `;
 
-    const mail = {
-      personalizations: [{ to: [{ email: "info@osm-solutions.com" }] }],
-      from: { email: "no-reply@osm-solutions.pages.dev" },
-      reply_to: { email: data.email },
-      subject: `New contact form submission from ${data.name}`,
-      content: [{ type: "text/plain", value: emailBody }]
-    };
+    const resendApiKey = context.env.RESEND_API_KEY;
 
-    const res = await fetch("https://api.mailchannels.net/tx/v1/send", {
+    const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(mail)
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${resendApiKey}`,
+      },
+      body: JSON.stringify({
+        from: "no-reply@osm-solutions.com",
+        to: "info@osm-solutions.com",
+        subject: `New contact form submission from ${data.name}`,
+        reply_to: data.email,
+        text: emailBody,
+      }),
     });
 
-    // Log the MailChannels response for debugging
-    const text = await res.text();
-    console.log("MailChannels response:", res.status, text);
+    const result = await res.json();
 
     if (res.ok) {
       return Response.json({ message: "✅ Thank you! Your message has been sent." });
     } else {
+      console.error("Resend API error:", result);
       return Response.json({
-        message: `❌ Failed to send message. MailChannels response: ${res.status} ${text}`
-      }, { status: 500 });
+        message: `❌ Failed to send message (${res.status}): ${JSON.stringify(result)}`,
+      }, { status: res.status });
     }
-
   } catch (err) {
     console.error("Worker error:", err);
     return Response.json({ message: "❌ Internal error." }, { status: 500 });
