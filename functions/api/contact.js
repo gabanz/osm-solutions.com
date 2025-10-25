@@ -16,7 +16,8 @@ ${data.message}
 
     const mail = {
       personalizations: [{ to: [{ email: "info@osm-solutions.com" }] }],
-      from: { email: "noreply@osm-solutions.com" },
+      from: { email: "no-reply@osm-solutions.pages.dev" },
+      reply_to: { email: data.email },
       subject: `New contact form submission from ${data.name}`,
       content: [{ type: "text/plain", value: emailBody }]
     };
